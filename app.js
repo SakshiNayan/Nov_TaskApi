@@ -1,6 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const taskModal = require('./Schema')
+const {taskModal, countModel} = require('./Schema')
 
 const app = express();
 
@@ -9,17 +9,32 @@ app.use(express.urlencoded({extended: false}))
 
 
 app.post('/post',(req,res)=>{
-    try{
-        taskModal.create({
-            title : req.body.title,
-            is_complete : req.body.is_complete
-        }).then((data)=>{
-            res.status(200).send({status:'Successfully Added task'})
-        })
-    }
-    catch(err){
-        res.status(400).send(err.message)
-    }
+    countModel.findOneAndUpdate(
+        {id:"autoval"},
+        {'$inc':{"seq":1}},
+        {new : true},(err, cd)=>{
+            //console.log("counter val", cd)
+            let seqId ;
+            if(cd == null){
+                const newVal = new countModel({id:"autoval", seq:1})
+                newVal.save()
+                seqId = 1
+            }else{
+                seqId = cd.seq
+            }
+
+            taskModal.create({
+                id : seqId,
+                title : req.body.title,
+                is_complete : req.body.is_complete
+            }).then((data)=>{
+                res.status(200).send({status:'Successfully Added task'})
+            }).catch((err)=>{
+                res.status(400).send(err.message)
+            })
+        }
+    )
+
 });
 
 app.get('/fetch',(req,res)=>{
@@ -30,7 +45,7 @@ app.get('/fetch',(req,res)=>{
     })
 });
 app.get('/fetch/:id',(req,res)=>{
-    taskModal.find({_id: req.params.id}).then((data)=>{
+    taskModal.find({id: req.params.id}).then((data)=>{
         res.status(200).send({specific_task: data})
     }).catch((err)=>{
         res.status(400).send("could not find the task")
@@ -38,7 +53,7 @@ app.get('/fetch/:id',(req,res)=>{
 })
 
 app.delete('/delete/:id',(req,res)=>{
-    taskModal.deleteOne({_id: req.params.id}).then((task)=>{
+    taskModal.deleteOne({id: req.params.id}).then((task)=>{
         res.status(200).send("Task is deleted Successfully")
     }).catch((err)=>{
         res.status(400).send("could not find the task")
@@ -63,7 +78,7 @@ app.put('/update/:id',(req,res)=>{
     // catch(err){
     //     res.status(400).send(err)
     // }
-    taskModal.find({_id: req.params.id}).then((data)=>{
+    taskModal.find({id: req.params.id}).then((data)=>{
         taskModal.updateOne({title : req.params.title}, {is_complete : req.params.is_complete})
         .then(()=>{
             res.status(200).send('Status Updated')
