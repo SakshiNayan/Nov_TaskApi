@@ -61,23 +61,7 @@ app.delete('/delete/:id',(req,res)=>{
 });
 
 app.put('/update/:id',(req,res)=>{
-    // try{
-    //     const task = taskModal.find({_id: req.params.id})
-    //     if(task){
-    //         taskModal.updateMany({
-    //             title : req.params.title,
-    //             is_complete : req.params.is_complete
-    //         }, req.body)
-    //         .then((data)=>{
-    //             res.status(200).send('Status Updated')
-    //         })
-    //     }else{
-    //         res.status(400).send('Invalid input')
-    //     }
-    // }
-    // catch(err){
-    //     res.status(400).send(err)
-    // }
+
     taskModal.find({id: req.params.id}).then((data)=>{
         taskModal.updateOne({title : req.params.title}, {is_complete : req.params.is_complete})
         .then(()=>{
